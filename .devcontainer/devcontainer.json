@@ -14,7 +14,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "git config --global --add safe.directory /workspaces/documents-manager",
+	"postCreateCommand": "sh -c \"git config --global --add safe.directory /workspaces/documents-manager && uv sync --dev\"",
 
 	// Configure tool-specific properties.
 	"customizations": {
@@ -25,10 +25,5 @@
 				"mhutchie.git-graph"
 			]
 		}
-	},
-
-	// // Mount for ssh keys
-	// "mounts": [
-	// 	"source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
-	// ]
+	}
 }
