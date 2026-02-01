@@ -22,7 +22,9 @@
 			"extensions": [
 				"ms-python.python",
 				"charliermarsh.ruff",
-				"mhutchie.git-graph"
+				"mhutchie.git-graph",
+				"GitHub.copilot",
+				"GitHub.copilot-chat"
 			]
 		}
 	}
