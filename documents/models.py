@@ -66,7 +66,7 @@ class DocumentFile(TimeStampedModel):
         ]
 
     def __str__(self) -> str:
-        return self.filename
+        return self.original_filename
 
     @property
     def original_filename(self) -> str:
