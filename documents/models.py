@@ -8,6 +8,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 from config.models import TimeStampedModel
+from documents.querysets import DocumentQuerySet, DocumentFileQuerySet
 
 User = get_user_model()
 
@@ -25,6 +26,8 @@ class Document(TimeStampedModel):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="documents")
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+
+    objects = DocumentQuerySet.as_manager()
 
     class Meta:
         ordering = ["-created_at"]
@@ -58,6 +61,8 @@ class DocumentFile(TimeStampedModel):
         Document, on_delete=models.CASCADE, related_name="files"
     )
     file = models.FileField(upload_to="documents/")
+
+    objects = DocumentFileQuerySet.as_manager()
 
     class Meta:
         ordering = ["created_at"]
