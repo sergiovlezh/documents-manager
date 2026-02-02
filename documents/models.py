@@ -60,7 +60,7 @@ class DocumentFile(TimeStampedModel):
     file = models.FileField(upload_to="documents/")
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["created_at"]
         indexes = [
             models.Index(fields=["document", "created_at"]),
         ]
