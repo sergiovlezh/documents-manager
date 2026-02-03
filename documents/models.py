@@ -247,7 +247,7 @@ class DocumentTag(TimeStampedModel):
     class Meta:
         unique_together = ("document", "tag", "owner")
         indexes = [
-            models.Index(fields=["document", "tag"]),
+            models.Index(fields=["document", "tag", "owner"]),
         ]
 
     def __str__(self) -> str:
