@@ -140,6 +140,27 @@ class DocumentFile(TimeStampedModel):
         """
         return cls.extract_filename(uploaded_file)
 
+    @classmethod
+    def create_for_document(
+        cls,
+        *,
+        document: Document,
+        uploaded_file: UploadedFile,
+    ) -> "DocumentFile":
+        """Create a `DocumentFile` for a given `Document`.
+
+        Args:
+            document (Document): The document to associate the file with.
+            file (UploadedFile): The uploaded file instance.
+
+        Returns:
+            DocumentFile: The created DocumentFile instance.
+        """
+        return cls.objects.create(
+            document=document,
+            file=uploaded_file,
+        )
+
 
 class DocumentMetadata(TimeStampedModel):
     """Stores arbitrary key-value metadata associated with a document.
