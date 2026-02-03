@@ -4,8 +4,12 @@ These models form the core of the documents manager domain, providing
 ownership, timestamps, and extensible metadata.
 """
 
-from django.db import models
+from pathlib import Path
+
 from django.contrib.auth import get_user_model
+from django.core.files import File
+from django.core.files.uploadedfile import UploadedFile
+from django.db import models
 
 from config.models import TimeStampedModel
 from documents.querysets import DocumentFileQuerySet, DocumentQuerySet
@@ -38,17 +42,6 @@ class Document(TimeStampedModel):
     def __str__(self) -> str:
         return self.title
 
-    def set_title_from_file(self, document_file: "DocumentFile") -> None:
-        """Set the document title from the provided file if no title exists.
-
-        Args:
-            document_file (DocumentFile): The document file whose original filename
-                will be used as the title.
-        """
-        if not self.title:
-            self.title = document_file.original_filename
-            self.save(update_fields=["title"])
-
 
 class DocumentFile(TimeStampedModel):
     """Represents a file uploaded and associated with a document.
@@ -80,7 +73,31 @@ class DocumentFile(TimeStampedModel):
         Returns:
             str: The base filename of the uploaded file.
         """
-        return self.file.name.rsplit("/", 1)[-1]
+        return self.extract_filename(self.file)
+
+    @staticmethod
+    def extract_filename(file: File) -> str:
+        """Return the base filename from a file.
+
+        Args:
+            file (File): A Django File or UploadedFile instance.
+
+        Returns:
+            str: The base filename of the file.
+        """
+        return Path(file.name).name
+
+    @classmethod
+    def derive_title(cls, uploaded_file: UploadedFile) -> str:
+        """Derive a document title from an uploaded file.
+
+        Args:
+            uploaded_file (UploadedFile): The uploaded file instance.
+
+        Returns:
+            str: The derived title.
+        """
+        return cls.extract_filename(uploaded_file)
 
 
 class DocumentMetadata(TimeStampedModel):
