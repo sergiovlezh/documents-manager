@@ -128,6 +128,18 @@ class DocumentFile(TimeStampedModel):
         """
         return Path(file.name).name
 
+    @staticmethod
+    def extract_extension(file: File) -> str:
+        """Return the file extension from a file.
+
+        Args:
+            file (File): A Django File or UploadedFile instance.
+
+        Returns:
+            str: The file extension of the file.
+        """
+        return Path(file.name).suffix.lstrip(".")
+
     @classmethod
     def derive_title(cls, uploaded_file: UploadedFile) -> str:
         """Derive a document title from an uploaded file.
