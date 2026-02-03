@@ -138,7 +138,7 @@ class DocumentFile(TimeStampedModel):
         Returns:
             str: The derived title.
         """
-        return cls.extract_filename(uploaded_file)
+        return Path(cls.extract_filename(uploaded_file)).stem
 
     @classmethod
     def create_for_document(
