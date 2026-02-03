@@ -5,16 +5,20 @@ ownership, timestamps, and extensible metadata.
 """
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
 from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
-from django.db import models
+from django.db import models, transaction
 
 from config.models import TimeStampedModel
 from documents.querysets import DocumentFileQuerySet, DocumentQuerySet
 
 User = get_user_model()
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import AbstractUser as UserType
 
 
 class Document(TimeStampedModel):
@@ -41,6 +45,43 @@ class Document(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.title
+
+    @classmethod
+    def create_from_file(
+        cls,
+        *,
+        owner: "UserType",
+        uploaded_file: UploadedFile,
+        title: str | None = None,
+        description: str = "",
+    ) -> "Document":
+        """Create a `Document` and its first `DocumentFile` atomically.
+
+        Args:
+            owner (UserType): The owner of the document.
+            uploaded_file (UploadedFile): Uploaded file instance.
+            title (str | None): Optional explicit title.
+            description (str): Optional description.
+
+        Returns:
+            Document: The created document instance.
+        """
+        title = title.strip() if title else None
+        derived_title = title or DocumentFile.derive_title(uploaded_file)
+
+        with transaction.atomic():
+            document = cls.objects.create(
+                owner=owner,
+                title=derived_title,
+                description=description,
+            )
+
+            DocumentFile.create_for_document(
+                document=document,
+                uploaded_file=uploaded_file,
+            )
+
+        return document
 
 
 class DocumentFile(TimeStampedModel):
