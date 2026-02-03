@@ -8,7 +8,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 from config.models import TimeStampedModel
-from documents.querysets import DocumentQuerySet, DocumentFileQuerySet
+from documents.querysets import DocumentFileQuerySet, DocumentQuerySet
 
 User = get_user_model()
 
