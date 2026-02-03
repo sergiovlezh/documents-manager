@@ -29,6 +29,14 @@ class DocumentQuerySet(models.QuerySet):
             )
         )
 
+    def with_files_count(self):
+        """Annotate each document with the count of its related files.
+
+        Returns:
+            QuerySet: QuerySet annotated with files_count.
+        """
+        return self.annotate(files_count=models.Count("files"))
+
     def with_user_tags(self, user):
         """Prefetch document tags belonging to the given user, including
         the related Tag objects, to optimize tag access.
