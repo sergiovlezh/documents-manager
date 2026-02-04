@@ -17,7 +17,7 @@ def get_tags_from_document(document: Document) -> list[dict]:
     """
     document_tags = getattr(document, "document_tags", [])
 
-    return [TagSerializer(document_tag.tag).data for document_tag in document_tags]
+    return [TagSerializer(document_tag.tag).data for document_tag in document_tags.all()]
 
 
 class TagSerializer(serializers.ModelSerializer):
