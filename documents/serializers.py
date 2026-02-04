@@ -119,3 +119,19 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
 
     def get_tags(self, obj: Document):
         return get_tags_from_document(obj)
+
+
+class DocumentUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating document details."""
+
+    class Meta:
+        model = Document
+        fields = ("title", "description")
+
+    def validate(self, attrs):
+        forbidden = {"file", "files"}
+        if forbidden & set(self.initial_data.keys()):
+            raise serializers.ValidationError(
+                "Files cannot be modified via this endpoint."
+            )
+        return attrs
