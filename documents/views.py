@@ -6,6 +6,7 @@ from documents.models import Document
 from documents.serializers import (
     DocumentDetailSerializer,
     DocumentListSerializer,
+    DocumentUpdateSerializer,
     SingleFileDocumentCreateSerializer,
 )
 
@@ -20,6 +21,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
     """
 
     permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "patch", "delete"]
 
     def get_queryset(self):
         """Return the queryset of documents for the authenticated user,
@@ -54,6 +56,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         if self.action == "retrieve":
             return DocumentDetailSerializer
+
+        if self.action == "update" or self.action == "partial_update":
+            return DocumentUpdateSerializer
 
         return DocumentListSerializer
 
