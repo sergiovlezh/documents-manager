@@ -62,13 +62,20 @@ class DocumentFileSerializer(serializers.ModelSerializer):
 
     original_filename = serializers.CharField(read_only=True)
     extension = serializers.SerializerMethodField()
+    url = serializers.FileField(source="file", read_only=True)
 
     def get_extension(self, obj: DocumentFile) -> str:
         return obj.extract_extension(obj.file)
 
     class Meta:
         model = DocumentFile
-        fields = ["id", "original_filename", "extension", "created_at"]
+        fields = [
+            "id",
+            "original_filename",
+            "extension",
+            "url",
+            "created_at",
+        ]
         read_only_fields = fields
 
 
