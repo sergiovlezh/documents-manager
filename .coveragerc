@@ -8,3 +8,6 @@ omit =
     */wsgi.py
     config/**/*.py
     manage.py
+
+[coverage:report]
+show_missing = True
