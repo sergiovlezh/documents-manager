@@ -1,12 +1,12 @@
 from django.contrib.auth import get_user_model
 
 from documents.models import Document, DocumentFile, DocumentTag, Tag
-from documents.tests.base import TemporaryMediaRootTestCase
+from documents.tests.base import TemporaryMediaTestCase
 
 User = get_user_model()
 
 
-class DocumentQuerySetTests(TemporaryMediaRootTestCase):
+class DocumentQuerySetTests(TemporaryMediaTestCase):
     def setUp(self):
         super().setUp()
 
@@ -110,7 +110,7 @@ class DocumentQuerySetTests(TemporaryMediaRootTestCase):
         self.assertEqual(tags, [tag1_name])
 
 
-class DocumentFileQuerySetTests(TemporaryMediaRootTestCase):
+class DocumentFileQuerySetTests(TemporaryMediaTestCase):
     def setUp(self):
         super().setUp()
 

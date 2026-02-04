@@ -3,12 +3,12 @@ from pathlib import Path
 from django.contrib.auth import get_user_model
 
 from documents.models import Document, DocumentFile
-from documents.tests.base import TemporaryMediaRootTestCase
+from documents.tests.base import TemporaryMediaTestCase
 
 User = get_user_model()
 
 
-class DocumentModelTests(TemporaryMediaRootTestCase):
+class DocumentModelTests(TemporaryMediaTestCase):
     def setUp(self):
         super().setUp()
 
@@ -76,7 +76,7 @@ class DocumentModelTests(TemporaryMediaRootTestCase):
         self.assertEqual(str(document), filename)
 
 
-class DocumentFileModelTests(TemporaryMediaRootTestCase):
+class DocumentFileModelTests(TemporaryMediaTestCase):
     def setUp(self):
         super().setUp()
 

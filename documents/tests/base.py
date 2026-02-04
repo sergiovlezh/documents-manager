@@ -3,11 +3,11 @@ import tempfile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
+from rest_framework.test import APITestCase
 
 
-class TemporaryMediaRootTestCase(TestCase):
-    def setUp(self):
-        # Create a temporary directory for MEDIA_ROOT
+class _TempMediaManagerBase:
+    def _setup_media(self):
         self._temp_media_dir = tempfile.mkdtemp()
         self.override = override_settings(MEDIA_ROOT=self._temp_media_dir)
         self.override.enable()
@@ -27,3 +27,10 @@ class TemporaryMediaRootTestCase(TestCase):
         content_type="application/pdf",
     ):
         return SimpleUploadedFile(name, content, content_type)
+
+
+class TemporaryMediaTestCase(_TempMediaManagerBase, TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self._setup_media()
