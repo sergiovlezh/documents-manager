@@ -64,3 +64,60 @@ class DocumentModelTests(TemporaryMediaRootTestCase):
         # Assert
         self.assertEqual(document_file.document, document)
         self.assertTrue(document_file.file.name.endswith(Path(filename).suffix))
+
+    def test_str_returns_title(self):
+        # Arrange
+        filename = "My document"
+
+        # Act
+        document = Document.objects.create(owner=self.user, title=filename)
+
+        # Assert
+        self.assertEqual(str(document), filename)
+
+
+class DocumentFileModelTests(TemporaryMediaRootTestCase):
+    def setUp(self):
+        super().setUp()
+
+        # Create a test user
+        self.user = User.objects.create_user(
+            username="testuser",
+            password="password123",
+        )
+
+    def test_str_returns_original_filename(self):
+        # Arrange
+        filename = "test.txt"
+
+        # Act
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(name=filename),
+        )
+        document_file = document.files.first()
+
+        # Assert
+        self.assertEqual(str(document_file), filename)
+
+    def test_extract_extension_cases(self):
+        cases = {
+            "file.pdf": "pdf",
+            "archive.tar.gz": "gz",
+            "README": "",
+            ".env": "",
+            "IMAGE.PNG": "PNG",
+        }
+
+        for filename, expected in cases.items():
+            with self.subTest(name=filename):
+                document = Document.create_from_file(
+                    owner=self.user,
+                    uploaded_file=self._upload_test_file(name=filename),
+                )
+                document_file = document.files.first()
+
+                self.assertEqual(
+                    DocumentFile.extract_extension(document_file.file),
+                    expected,
+                )
