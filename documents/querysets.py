@@ -1,5 +1,5 @@
-from django.db import models
 from django.apps import apps
+from django.db import models
 
 
 class DocumentQuerySet(models.QuerySet):
@@ -65,3 +65,14 @@ class DocumentFileQuerySet(models.QuerySet):
             DocumentFile: The latest DocumentFile instance, or None if no files exist.
         """
         return self.order_by("-created_at").first()
+
+    def most_recent_for_document(self, document):
+        """Return the most recently created document file for a specific document.
+
+        Args:
+            document (Document): The document to filter files by.
+
+        Returns:
+            DocumentFile: The latest DocumentFile instance for the document, or None if no files exist
+        """
+        return self.filter(document=document).order_by("-created_at").first()
