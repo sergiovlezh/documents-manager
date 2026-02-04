@@ -35,7 +35,7 @@ class Document(TimeStampedModel):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
 
-    objects = DocumentQuerySet.as_manager()
+    objects: DocumentQuerySet = DocumentQuerySet.as_manager()
 
     class Meta:
         ordering = ["-created_at"]
@@ -96,7 +96,7 @@ class DocumentFile(TimeStampedModel):
     )
     file = models.FileField(upload_to="documents/")
 
-    objects = DocumentFileQuerySet.as_manager()
+    objects: DocumentFileQuerySet = DocumentFileQuerySet.as_manager()
 
     class Meta:
         ordering = ["created_at"]
