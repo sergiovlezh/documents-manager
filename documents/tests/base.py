@@ -34,3 +34,10 @@ class TemporaryMediaTestCase(_TempMediaManagerBase, TestCase):
         super().setUp()
 
         self._setup_media()
+
+
+class TemporaryMediaAPITestCase(_TempMediaManagerBase, APITestCase):
+    def setUp(self):
+        super().setUp()
+
+        self._setup_media()
