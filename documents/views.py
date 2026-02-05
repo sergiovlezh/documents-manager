@@ -1,10 +1,12 @@
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest
-from rest_framework import status, viewsets
+from django.shortcuts import get_object_or_404
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from documents.models import Document
+from documents.models import Document, DocumentFile, DocumentNote
 from documents.serializers import (
     DocumentDetailSerializer,
     DocumentFileCreateSerializer,
@@ -119,4 +121,29 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         response_serializer = DocumentFileSerializer(new_files, many=True)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["delete"], url_path="files/(?P<file_id>[^/.]+)")
+    def remove_file(self, request: HttpRequest, pk: int = None, file_id: int = None):
+        """Delete a specific file from a document.
+
+        The document must have at least one file remaining after deletion.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            pk (int): The primary key of the document.
+            file_id (int): The primary key of the document file to delete.
+
+        Returns:
+            Response: The HTTP response indicating the result of the deletion.
+        """
+        document = self.get_object()
+
+        document_file: DocumentFile = get_object_or_404(document.files, id=file_id)
+
+        try:
+            document.remove_file(document_file=document_file)
+        except ValidationError as ex:
+            raise serializers.ValidationError(str(ex))
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)

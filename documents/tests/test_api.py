@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 
-from documents.models import Document
+from documents.models import Document, DocumentFile
 from documents.tests.base import TemporaryMediaAPITestCase
 
 User = get_user_model()
@@ -294,3 +294,46 @@ class DocumentAPITestCase(TemporaryMediaAPITestCase):
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_user_can_delete_file_from_multi_file_document(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(name="first.pdf"),
+        )
+        second_file = document.add_file(
+            uploaded_file=self._upload_test_file(name="second.pdf"),
+        )
+
+        url = reverse(
+            "document-remove-file",
+            args=[document.id, second_file.id],
+        )
+
+        # Act
+        response = self.client.delete(url)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        document.refresh_from_db()
+        self.assertEqual(document.files.count(), 1)
+
+    def test_cannot_delete_last_file_from_document(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(),
+        )
+        document_file = document.files.first()
+
+        url = reverse(
+            "document-remove-file",
+            args=[document.id, document_file.id],
+        )
+
+        # Act
+        response = self.client.delete(url)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(document.files.count(), 1)
