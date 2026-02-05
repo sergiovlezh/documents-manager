@@ -13,6 +13,7 @@ from documents.serializers import (
     DocumentFileCreateSerializer,
     DocumentFileSerializer,
     DocumentListSerializer,
+    DocumentMetadataSerializer,
     DocumentNoteCreateUpdateSerializer,
     DocumentNoteSerializer,
     DocumentUpdateSerializer,
@@ -225,3 +226,55 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         note.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # --- Metadata
+    @action(detail=True, methods=["get"], url_path="metadata")
+    def metadata(self, request, pk: int = None):
+        document = self.get_object()
+        metadata = document.metadata.all().order_by("-created_at")
+
+        response_serializer = DocumentMetadataSerializer(metadata, many=True)
+
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    @metadata.mapping.post
+    def add_metadata(self, request, pk=None):
+        document = self.get_object()
+
+        serializer = DocumentMetadataSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        metadata = document.add_metadata(
+            **serializer.validated_data,
+        )
+
+        return Response(
+            DocumentMetadataSerializer(metadata).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(
+        detail=True, methods=["patch"], url_path=r"metadata/(?P<metadata_id>[^/.]+)"
+    )
+    def metadata_detail(self, request, pk: int = None, metadata_id: int = None):
+        document = self.get_object()
+
+        metadata = get_object_or_404(document.metadata, id=metadata_id)
+
+        serializer = DocumentMetadataSerializer(
+            metadata, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(DocumentMetadataSerializer(metadata).data)
+
+    @metadata_detail.mapping.delete
+    def delete_metadata(self, request, pk: int = None, metadata_id: int = None):
+        document = self.get_object()
+
+        metadata = get_object_or_404(document.metadata, id=metadata_id)
+
+        metadata.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+

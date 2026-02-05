@@ -500,3 +500,116 @@ class DocumentAPITestCase(TemporaryMediaAPITestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(document.notes.count(), 1)
+
+    def test_user_can_list_metadata_from_document(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(),
+        )
+        document.add_metadata(
+            key="category",
+            value="reports",
+        )
+
+        url = reverse("document-metadata", args=[document.id])
+
+        # Act
+        response = self.client.get(url)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["key"], "category")
+
+    def test_user_cannot_access_other_users_metadata(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.other_user,
+            uploaded_file=self._upload_test_file(),
+        )
+        document.add_metadata(
+            key="category",
+            value="reports",
+        )
+
+        url = reverse("document-metadata", args=[document.id])
+
+        # Act
+        response = self.client.get(url)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_user_can_add_metadata_to_document(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(),
+        )
+        url = reverse("document-metadata", args=[document.id])
+
+        payload = {
+            "key": "category",
+            "value": "reports",
+        }
+
+        # Act
+        response = self.client.post(url, payload, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(document.metadata.count(), 1)
+
+    def test_user_can_update_document_metadata(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(),
+        )
+
+        metadata = document.add_metadata(
+            key="category",
+            value="invoices",
+        )
+
+        url = reverse(
+            "document-metadata-detail",
+            args=[document.id, metadata.id],
+        )
+
+        payload = {
+            "value": "receipts",
+        }
+
+        # Act
+        response = self.client.patch(url, payload, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        metadata.refresh_from_db()
+        self.assertEqual(metadata.value, "receipts")
+
+    def test_user_can_delete_document_metadata(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(),
+        )
+
+        metadata = document.add_metadata(
+            key="category",
+            value="misc",
+        )
+
+        url = reverse(
+            "document-metadata-detail",
+            args=[document.id, metadata.id],
+        )
+
+        # Act
+        response = self.client.delete(url)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(document.metadata.count(), 0)
