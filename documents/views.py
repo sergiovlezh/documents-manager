@@ -72,6 +72,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         document = serializer.save()
 
+        response_serializer = DocumentDetailSerializer(document)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=["post"], url_path="upload-multiple")
     def upload_multiple(self, request: HttpRequest):
