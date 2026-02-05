@@ -5,6 +5,7 @@ ownership, timestamps, and extensible metadata.
 """
 
 from pathlib import Path
+from random import randint
 from typing import TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
@@ -19,6 +20,16 @@ User = get_user_model()
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractUser as UserType
+
+
+def get_random_color() -> str:
+    """Generate a random hex color code.
+
+    Returns:
+        str: A random hex color code in the format #RRGGBB.
+    """
+
+    return "#{:06x}".format(randint(0, 0xFFFFFF))
 
 
 class Document(TimeStampedModel):
@@ -270,6 +281,7 @@ class DocumentTag(TimeStampedModel):
     owner = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="document_tags"
     )
+    color = models.CharField(max_length=7, default=get_random_color)
 
     class Meta:
         constraints = [
