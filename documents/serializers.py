@@ -236,3 +236,28 @@ class DocumentNoteCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentNote
         fields = ["content"]
+
+
+class DocumentMetadataSerializer(serializers.ModelSerializer):
+    """Serializer for document metadata."""
+
+    class Meta:
+        model = DocumentMetadata
+        fields = ["id", "key", "value", "created_at"]
+        read_only_fields = ["id", "created_at"]
+
+
+class DocumentMetadataCreateUpdateSerializer(serializers.Serializer):
+    """Serializer to add or update a metadata entry for a document."""
+
+    key = serializers.CharField(max_length=255)
+    value = serializers.CharField(max_length=255)
+
+    def save(self, **kwargs) -> DocumentMetadata:
+        document: Document = self.context["document"]
+
+        # Delegamos en tu método de modelo: document.add_metadata(key, value)
+        return document.add_metadata(
+            key=self.validated_data["key"], value=self.validated_data["value"]
+        )
+
