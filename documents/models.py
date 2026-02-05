@@ -251,6 +251,10 @@ class Tag(TimeStampedModel):
     def __str__(self) -> str:
         return self.name
 
+    def save(self, *args, **kwargs):
+        self.name = self.name.strip()
+        return super().save(*args, **kwargs)
+
 
 class DocumentTag(TimeStampedModel):
     """Associates a document with a tag for a specific owner.
