@@ -4,6 +4,8 @@ from rest_framework import serializers
 from documents.models import (
     Document,
     DocumentFile,
+    DocumentMetadata,
+    DocumentNote,
     DocumentTag,
     Tag,
 )
@@ -261,3 +263,37 @@ class DocumentMetadataCreateUpdateSerializer(serializers.Serializer):
             key=self.validated_data["key"], value=self.validated_data["value"]
         )
 
+
+class MergeDocumentsSerializer(serializers.Serializer):
+    """Serializer to merge multiple documents into the current one."""
+
+    source_document_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        min_length=1,
+    )
+
+    def validate_source_document_ids(self, value):
+        main_doc_id = self.context["view"].get_object().id
+        request: HttpRequest = self.context["request"]
+        user = request.user
+
+        if main_doc_id in value:
+            raise serializers.ValidationError("Cannot merge a document with itself.")
+
+        sources = Document.objects.filter(id__in=value, owner=user)
+
+        if sources.count() != len(value):
+            raise serializers.ValidationError(
+                "One or more document IDs are invalid or don't belong to you."
+            )
+
+        return sources
+
+    def save(self):
+        main_document: Document = self.context["view"].get_object()
+        source_documents: list[Document] = self.validated_data["source_document_ids"]
+
+        main_document.merge_documents(source_documents)
+
+        return main_document
