@@ -47,6 +47,32 @@ class DocumentAPITestCase(TemporaryMediaAPITestCase):
         self.assertEqual(document.description, "My first document")
         self.assertEqual(document.files.count(), 1)
 
+    def test_create_document_with_multiple_files(self):
+        # Arrange
+        payload = {
+            "files": [
+                self._upload_test_file(name="file1.pdf"),
+                self._upload_test_file(name="file2.pdf"),
+            ],
+            "description": "Document with multiple files",
+        }
+
+        url = reverse("document-upload-multiple")
+
+        # Act
+        response = self.client.post(url, payload, format="multipart")
+
+        document_id = response.data["id"]
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        document = Document.objects.get(id=document_id)
+        self.assertEqual(document.owner, self.user)
+        self.assertEqual(document.title, "file1")
+        self.assertEqual(document.description, "Document with multiple files")
+        self.assertEqual(document.files.count(), 2)
+
     def test_list_documents_only_returns_user_documents(self):
         # Arrange
         Document.create_from_file(

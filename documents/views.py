@@ -1,4 +1,5 @@
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -7,6 +8,7 @@ from documents.serializers import (
     DocumentDetailSerializer,
     DocumentListSerializer,
     DocumentUpdateSerializer,
+    MultiFileDocumentCreateSerializer,
     SingleFileDocumentCreateSerializer,
 )
 
@@ -54,6 +56,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
         if self.action == "create":
             return SingleFileDocumentCreateSerializer
 
+        elif self.action == "upload_multiple":
+            return MultiFileDocumentCreateSerializer
+
         if self.action == "retrieve":
             return DocumentDetailSerializer
 
@@ -67,7 +72,22 @@ class DocumentViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         document = serializer.save()
 
-        response_serializer = DocumentDetailSerializer(
-            document, context=self.get_serializer_context()
-        )
+
+    @action(detail=False, methods=["post"], url_path="upload-multiple")
+    def upload_multiple(self, request: HttpRequest):
+        """Upload a new document with multiple files.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+
+        Returns:
+            Response: The HTTP response with the created document details.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        document = serializer.save()
+
+        response_serializer = DocumentDetailSerializer(document)
+
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
