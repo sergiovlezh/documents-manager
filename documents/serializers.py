@@ -204,3 +204,16 @@ class DocumentUpdateSerializer(serializers.ModelSerializer):
                 "Files cannot be modified via this endpoint."
             )
         return attrs
+
+
+class DocumentFileCreateSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+    def validate_file(self, value):
+        if not value:
+            raise serializers.ValidationError("No file was uploaded.")
+
+        if not value.size:
+            raise serializers.ValidationError("The uploaded file is empty.")
+
+        return value
