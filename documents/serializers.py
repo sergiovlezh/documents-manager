@@ -90,6 +90,42 @@ class SingleFileDocumentCreateSerializer(serializers.Serializer):
         )
 
 
+class MultiFileDocumentCreateSerializer(serializers.Serializer):
+    """Serializer for creating a Document with multiple uploaded files."""
+
+    files = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        min_length=1,
+    )
+    description = serializers.CharField(required=False, allow_blank=True)
+
+    def validate_files(self, value):
+        if not value:
+            raise serializers.ValidationError("No files were uploaded.")
+
+        for uploaded_file in value:
+            if not uploaded_file.size:
+                raise serializers.ValidationError(
+                    f"The uploaded file '{uploaded_file.name}' is empty."
+                )
+
+        return value
+
+    def create(self, validated_data):
+        request: HttpRequest = self.context["request"]
+        user = request.user
+
+        uploaded_files = validated_data.pop("files")
+        description = validated_data.get("description", "").strip()
+
+        return Document.create_from_multiple_files(
+            owner=user,
+            uploaded_files=uploaded_files,
+            description=description,
+        )
+
+
 class DocumentFileSerializer(serializers.ModelSerializer):
     """Read-only serializer for document files."""
 
