@@ -20,11 +20,10 @@ def get_tags_from_document(document: Document) -> list[dict]:
     Returns:
         list: A list of serialized tags associated with the document.
     """
-    document_tags = getattr(document, "document_tags", [])
-
-    return [
-        TagSerializer(document_tag.tag).data for document_tag in document_tags.all()
-    ]
+    document_tags = getattr(document, "document_tags", None)
+    if document_tags is None:
+        return []
+    return DocumentTagDetailSerializer(document_tags.all(), many=True).data
 
 
 class TagSerializer(serializers.ModelSerializer):
