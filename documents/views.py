@@ -1,3 +1,4 @@
+from django.http import HttpRequest
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -6,6 +7,8 @@ from rest_framework.response import Response
 from documents.models import Document
 from documents.serializers import (
     DocumentDetailSerializer,
+    DocumentFileCreateSerializer,
+    DocumentFileSerializer,
     DocumentListSerializer,
     DocumentUpdateSerializer,
     MultiFileDocumentCreateSerializer,
@@ -91,5 +94,29 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         response_serializer = DocumentDetailSerializer(document)
 
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    # --- Document Files
+    @action(detail=True, methods=["post"], url_path="files")
+    def add_files(self, request: HttpRequest, pk: int = None):
+        """Add a new file to an existing document.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            pk (int): The primary key of the document.
+
+        Returns:
+            Response: The HTTP response with the document file details.
+        """
+        document = self.get_object()
+
+        serializer = DocumentFileCreateSerializer(
+            data=request.data, context={"document": document}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        new_files = serializer.save()
+
+        response_serializer = DocumentFileSerializer(new_files, many=True)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)

@@ -209,16 +209,31 @@ class DocumentUpdateSerializer(serializers.ModelSerializer):
 
 
 class DocumentFileCreateSerializer(serializers.Serializer):
-    file = serializers.FileField()
+    """Serializer to upload one or multiple files to an existing document."""
 
-    def validate_file(self, value):
+    files = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        min_length=1,
+    )
+
+    def validate_files(self, value):
         if not value:
-            raise serializers.ValidationError("No file was uploaded.")
+            raise serializers.ValidationError("No files were uploaded.")
 
-        if not value.size:
-            raise serializers.ValidationError("The uploaded file is empty.")
+        for uploaded_file in value:
+            if not uploaded_file.size:
+                raise serializers.ValidationError(
+                    f"The uploaded file '{uploaded_file.name}' is empty."
+                )
 
         return value
+
+    def create(self, validated_data):
+        document: Document = self.context["document"]
+        uploaded_files = validated_data.pop("files")
+
+        return document.add_files(uploaded_files=uploaded_files)
 
 
 class DocumentNoteSerializer(serializers.ModelSerializer):

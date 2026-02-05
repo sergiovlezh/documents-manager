@@ -233,3 +233,64 @@ class DocumentAPITestCase(TemporaryMediaAPITestCase):
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_user_can_add_single_file_to_document(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(name="first.pdf"),
+        )
+        url = reverse("document-add-files", args=[document.id])
+
+        payload = {
+            "files": [self._upload_test_file(name="second.pdf")],
+        }
+
+        # Act
+        response = self.client.post(url, payload, format="multipart")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        document.refresh_from_db()
+        self.assertEqual(document.files.count(), 2)
+
+    def test_user_can_add_multiple_files_to_document(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(name="first.pdf"),
+        )
+        url = reverse("document-add-files", args=[document.id])
+
+        payload = {
+            "files": [
+                self._upload_test_file(name="second.pdf"),
+                self._upload_test_file(name="third.pdf"),
+            ],
+        }
+
+        # Act
+        response = self.client.post(url, payload, format="multipart")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        document.refresh_from_db()
+        self.assertEqual(document.files.count(), 3)
+
+    def test_user_cannot_add_file_to_other_users_document(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.other_user,
+            uploaded_file=self._upload_test_file(),
+        )
+        url = reverse("document-add-files", args=[document.id])
+
+        payload = {
+            "files": [self._upload_test_file(name="intruder.pdf")],
+        }
+
+        # Act
+        response = self.client.post(url, payload, format="multipart")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
