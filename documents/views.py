@@ -114,7 +114,29 @@ class DocumentViewSet(viewsets.ModelViewSet):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
     # --- Document Files
-    @action(detail=True, methods=["post"], url_path="files")
+    @action(detail=True, methods=["get"], url_path="files")
+    def files(self, request: HttpRequest, pk: int = None):
+        """Retrieve files associated with the document.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            pk (int): The primary key of the document.
+
+        Returns:
+            Response: The HTTP response with the list of document files.
+        """
+        document = self.get_object()
+        files = document.files.all().order_by("-created_at")
+
+        response_serializer = DocumentFileSerializer(files, many=True)
+
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        request=DocumentFileCreateSerializer,
+        responses={201: DocumentFileSerializer},
+    )
+    @files.mapping.post
     def add_files(self, request: HttpRequest, pk: int = None):
         """Add a new file to an existing document.
 
