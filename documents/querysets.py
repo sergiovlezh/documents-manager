@@ -55,3 +55,30 @@ class DocumentQuerySet(models.QuerySet):
                 queryset=DocumentTag.objects.filter(owner=user).select_related("tag"),
             )
         )
+
+    def search(self, query: str):
+        """Filter documents whose title, description or tag contains the given query string,
+        case-insensitively.
+
+        Args:
+            query (str): The search query string.
+
+        Returns:
+            QuerySet: Filtered QuerySet of documents matching the search query.
+        """
+        return self.filter(
+            models.Q(title__icontains=query)
+            | models.Q(description__icontains=query)
+            | models.Q(document_tags__tag__name__icontains=query)
+        ).distinct()
+
+    def with_metadata_keys(self, key: str):
+        """Filter documents that have metadata with the specified key.
+
+        Args:
+            key (str): The metadata key to filter by.
+
+        Returns:
+            QuerySet: Filtered QuerySet of documents with the specified metadata key.
+        """
+        return self.filter(metadata__key=key)
