@@ -5,6 +5,7 @@ from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 
 from documents.models import Document, DocumentFile, DocumentNote
 from documents.serializers import (
@@ -12,6 +13,8 @@ from documents.serializers import (
     DocumentFileCreateSerializer,
     DocumentFileSerializer,
     DocumentListSerializer,
+    DocumentNoteCreateUpdateSerializer,
+    DocumentNoteSerializer,
     DocumentUpdateSerializer,
     MultiFileDocumentCreateSerializer,
     SingleFileDocumentCreateSerializer,
@@ -146,4 +149,79 @@ class DocumentViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(str(ex))
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # --- Notes
+    @action(detail=True, methods=["get"], url_path="notes")
+    def notes(self, request: HttpRequest, pk: int = None):
+        """Retrieve notes associated with the document.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            pk (int): The primary key of the document.
+
+        Returns:
+            Response: The HTTP response with the list of document notes.
+        """
+        document = self.get_object()
+        notes = document.notes.all().order_by("-created_at")
+
+        response_serializer = DocumentNoteSerializer(notes, many=True)
+
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    @notes.mapping.post
+    def create_note(self, request: HttpRequest, pk: int = None):
+        """Add a new note to the document.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            pk (int): The primary key of the document.
+
+        Returns:
+            Response: The HTTP response with the created document note details.
+        """
+        document = self.get_object()
+
+        serializer = DocumentNoteCreateUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        note = document.add_note(
+            author=request.user,
+            content=serializer.validated_data["content"],
+        )
+
+        response_serializer = DocumentNoteSerializer(note)
+
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["patch"], url_path=r"notes/(?P<note_id>[^/.]+)")
+    def note_detail(self, request, pk: int = None, note_id: int = None):
+        document = self.get_object()
+
+        note = get_object_or_404(document.notes, id=note_id)
+
+        if note.author != request.user:
+            raise PermissionDenied("You cannot edit this note.")
+
+        serializer = DocumentNoteCreateUpdateSerializer(
+            note, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(DocumentNoteSerializer(note).data)
+
+    @note_detail.mapping.delete
+    def delete_note(self, request, pk: int = None, note_id: int = None):
+        document = self.get_object()
+
+        try:
+            note = document.notes.get(id=note_id)
+        except DocumentNote.DoesNotExist:
+            raise ValidationError({"note": "Note not found."})
+
+        if note.author != request.user:
+            raise PermissionDenied("You cannot detele this note.")
+
+        note.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

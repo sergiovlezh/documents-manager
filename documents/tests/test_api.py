@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 
-from documents.models import Document, DocumentFile
+from documents.models import Document
 from documents.tests.base import TemporaryMediaAPITestCase
 
 User = get_user_model()
@@ -337,3 +337,166 @@ class DocumentAPITestCase(TemporaryMediaAPITestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(document.files.count(), 1)
+
+    def test_user_can_list_notes_from_document(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(),
+        )
+        document.add_note(
+            author=self.user,
+            content="My first note",
+        )
+
+        url = reverse("document-notes", args=[document.id])
+
+        # Act
+        response = self.client.get(url)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["content"], "My first note")
+
+    def test_user_cannot_access_other_users_notes(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.other_user,
+            uploaded_file=self._upload_test_file(),
+        )
+        document.add_note(
+            author=self.other_user,
+            content="Other user's note",
+        )
+
+        url = reverse("document-notes", args=[document.id])
+
+        # Act
+        response = self.client.get(url)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_user_can_add_note_to_document(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(),
+        )
+        url = reverse("document-notes", args=[document.id])
+
+        payload = {
+            "content": "My first note",
+        }
+
+        # Act
+        response = self.client.post(url, payload, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(document.notes.count(), 1)
+
+    def test_user_can_update_own_note(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(),
+        )
+        note = document.add_note(
+            author=self.user,
+            content="Old content",
+        )
+
+        url = reverse(
+            "document-note-detail",
+            args=[document.id, note.id],
+        )
+
+        payload = {
+            "content": "Updated content",
+        }
+
+        # Act
+        response = self.client.patch(url, payload, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        note.refresh_from_db()
+        self.assertEqual(note.content, "Updated content")
+
+    def test_user_cannot_update_other_users_note(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(),
+        )
+        note = document.add_note(
+            author=self.other_user,
+            content="Other user's note",
+        )
+
+        url = reverse(
+            "document-note-detail",
+            args=[document.id, note.id],
+        )
+
+        payload = {
+            "content": "Hacked content",
+        }
+
+        # Act
+        response = self.client.patch(url, payload, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        note.refresh_from_db()
+        self.assertEqual(note.content, "Other user's note")
+
+    def test_user_can_delete_own_note(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(),
+        )
+
+        note = document.add_note(
+            author=self.user,
+            content="Temp note",
+        )
+
+        url = reverse(
+            "document-note-detail",
+            args=[document.id, note.id],
+        )
+
+        # Act
+        response = self.client.delete(url)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(document.notes.count(), 0)
+
+    def test_user_cannot_delete_other_users_note(self):
+        # Arrange
+        document = Document.create_from_file(
+            owner=self.user,
+            uploaded_file=self._upload_test_file(),
+        )
+
+        note = document.add_note(
+            author=self.other_user,
+            content="Other user's note",
+        )
+
+        url = reverse(
+            "document-note-detail",
+            args=[document.id, note.id],
+        )
+
+        # Act
+        response = self.client.delete(url)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(document.notes.count(), 1)
