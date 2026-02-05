@@ -12,14 +12,23 @@ El objetivo principal es modelar un sistema realista de gestión documental, apl
 
 La aplicación permite la **gestión de documentos digitales**, incluyendo:
 
-- Carga y descarga de documentos.
-- Organización de documentos mediante:
-    - Etiquetas
-    - Metadatos
-    - Descripciones
-    - Notas
-- Gestión de documentos por usuario.
-- Base preparada para documentos compartidos entre usuarios.
+- Carga de documentos con uno o múltiples archivos.
+- Descarga de archivos asociados a documentos.
+- Organización mediante:
+  - Etiquetas por usuario.
+  - Metadatos clave–valor.
+  - Descripciones
+  - Notas
+- Aislamiento estricto por usuario (ownership).
+- Operaciones avanzadas como **fusión de documentos**.
+
+---
+
+## Stack tecnológico
+
+- Python 3.x
+- Django
+- Django REST Framework
 
 ---
 
@@ -28,26 +37,49 @@ La aplicación permite la **gestión de documentos digitales**, incluyendo:
 ### Requisitos funcionales
 
 - **Modelos**
-    - Implementación de al menos cinco (5) modelos relacionados entre sí.
-    - Inclusión de métodos personalizados dentro de los modelos que reflejen lógica de negocio relevante.
-    - Uso de consultas avanzadas (querysets).
+    - Implementación de **más de cinco (5) modelos relacionados**:
+        - Document
+        - DocumentFile
+        - DocumentMetadata
+        - DocumentNote
+        - Tag
+        - DocumentTag
+
+    - Inclusión de métodos personalizados dentro de los modelos que reflejen lógica de negocio relevante:
+        - Creación atómica de documentos y archivos.
+        - Reglas de integridad (ej. un documento no puede quedar sin archivos).
+        - Gestión de etiquetas, notas y metadatos.
+        - Fusión de documentos.
+
+    - Uso de QuerySets
+        - Filtrado por usuario.
+        - Prefetch optimizado de archivos y etiquetas.
+        - Anotaciones (conteo de archivos).
+        - Búsqueda por título, descripción y etiquetas.
 
 - **ViewSets**
-    - Uso adecuado de ModelViewSet o equivalentes.
-    - Implementación de acciones adicionales (@action) más allá del CRUD estándar.
+    - Uso adecuado de `ModelViewSet`.
+
+
+    - Acciones personalizadas (`@action`) más allá del CRUD:
+        - Carga de múltiples archivos.
+        - Gestión de archivos por documento.
+        - Gestión de notas y metadatos.
+        - Fusión de documentos.
 
 - **Serializers**
-    - Validaciones avanzadas a nivel de campo y de objeto.
-    - Implementación de lógica personalizada para el guardado (create / update) o para el renderizado de los datos.
+    - Validaciones avanzadas a nivel de campo y objeto.
+        - Serializers específicos para lectura y escritura.
+
+    - Implementación de lógica personalizada de creación y actualización.
+        - Delegación de reglas de negocio a los modelos.
 
 - **Pruebas**
-    - Inclusión de pruebas unitarias que cubran:
+    - El proyecto incluye **pruebas unitarias y de integración** que cubren:
         - Métodos personalizados de los modelos.
-        - Validaciones y lógica implementada en los serializers.
-
-- **Sustentación técnica**
-    - Durante la sustentación, el candidato deberá explicar el diseño y las decisiones técnicas adoptadas.
-    - Se solicitará realizar modificaciones en tiempo real (live coding) sobre el proyecto presentado, con el fin de evaluar la capacidad de análisis, adaptación y dominio del framework.
+        - QuerySets personalizados.
+        - Validaciones y flujos de negocio implementados en serializers.
+        - Endpoints de la API.
 
 ---
 
@@ -116,6 +148,7 @@ Modelo explícito de relación muchos-a-muchos que incluye:
 - Documento
 - Etiqueta
 - Usuario propietario de la etiqueta
+- Color de la etiqueta
 
 > Cada combinación (documento, etiqueta, usuario) es única.
 
