@@ -196,7 +196,11 @@ class DocumentMetadata(TimeStampedModel):
     value = models.CharField(max_length=255)
 
     class Meta:
-        unique_together = ("document", "key")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["document", "key"], name="unique_metadata_per_doc"
+            )
+        ]
         indexes = [
             models.Index(fields=["key"]),
         ]
@@ -254,7 +258,11 @@ class DocumentTag(TimeStampedModel):
     )
 
     class Meta:
-        unique_together = ("document", "tag", "owner")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["document", "tag", "owner"], name="unique_document_tag_per_user"
+            )
+        ]
         indexes = [
             models.Index(fields=["document", "tag", "owner"]),
         ]
