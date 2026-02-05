@@ -55,24 +55,3 @@ class DocumentQuerySet(models.QuerySet):
                 queryset=DocumentTag.objects.filter(owner=user).select_related("tag"),
             )
         )
-
-
-class DocumentFileQuerySet(models.QuerySet):
-    def most_recent(self):
-        """Return the most recently created document file.
-
-        Returns:
-            DocumentFile: The latest DocumentFile instance, or None if no files exist.
-        """
-        return self.order_by("-created_at").first()
-
-    def most_recent_for_document(self, document):
-        """Return the most recently created document file for a specific document.
-
-        Args:
-            document (Document): The document to filter files by.
-
-        Returns:
-            DocumentFile: The latest DocumentFile instance for the document, or None if no files exist
-        """
-        return self.filter(document=document).order_by("-created_at").first()

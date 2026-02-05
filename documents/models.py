@@ -96,7 +96,6 @@ class DocumentFile(TimeStampedModel):
     )
     file = models.FileField(upload_to="documents/")
 
-    objects: DocumentFileQuerySet = DocumentFileQuerySet.as_manager()
 
     class Meta:
         ordering = ["created_at"]
