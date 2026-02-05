@@ -1,9 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -34,6 +36,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "post", "patch", "delete"]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         """Return the queryset of documents for the authenticated user,
@@ -80,6 +83,10 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         return DocumentListSerializer
 
+    @extend_schema(
+        request=SingleFileDocumentCreateSerializer,
+        responses={201: DocumentDetailSerializer},
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
