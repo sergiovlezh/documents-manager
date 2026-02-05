@@ -17,6 +17,7 @@ from documents.serializers import (
     DocumentNoteCreateUpdateSerializer,
     DocumentNoteSerializer,
     DocumentUpdateSerializer,
+    MergeDocumentsSerializer,
     MultiFileDocumentCreateSerializer,
     SingleFileDocumentCreateSerializer,
 )
@@ -73,6 +74,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         if self.action == "update" or self.action == "partial_update":
             return DocumentUpdateSerializer
+
+        if self.action == "merge":
+            return MergeDocumentsSerializer
 
         return DocumentListSerializer
 
@@ -278,3 +282,22 @@ class DocumentViewSet(viewsets.ModelViewSet):
         metadata.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    # --- Merge Documents
+    @action(detail=True, methods=["post"], url_path="merge")
+    def merge(self, request: HttpRequest, pk: int = None):
+        """Merge other documents into the current document.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            pk (int): The primary key of the main document.
+
+        Returns:
+            Response: The HTTP response with the merged document details.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        document = serializer.save()
+
+        response_serializer = DocumentDetailSerializer(document)
+
+        return Response(response_serializer.data, status=status.HTTP_200_OK)

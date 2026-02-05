@@ -613,3 +613,89 @@ class DocumentAPITestCase(TemporaryMediaAPITestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(document.metadata.count(), 0)
+
+    def test_user_can_merge_documents_into_main_document(self):
+        # Arrange
+        main_document = Document.create_from_file(
+            owner=self.user, uploaded_file=self._upload_test_file(name="main.pdf")
+        )
+        main_document.add_note(
+            author=self.user,
+            content="Main note",
+        )
+        main_document.add_tag_for_user(
+            name="main",
+            owner=self.user,
+        )
+        main_document.add_metadata(
+            key="main-key",
+            value="main-value",
+        )
+
+        source_document = Document.create_from_file(
+            owner=self.user, uploaded_file=self._upload_test_file(name="source.pdf")
+        )
+        source_document.add_note(
+            author=self.user,
+            content="Source note",
+        )
+        source_document.add_tag_for_user(
+            name="source",
+            owner=self.user,
+        )
+        source_document.add_metadata(
+            key="source-key",
+            value="source-value",
+        )
+
+        url = reverse("document-merge", args=[main_document.id])
+        payload = {"source_document_ids": [source_document.id]}
+
+        # Act
+        response = self.client.post(url, payload, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(Document.objects.filter(id=source_document.id).exists())
+        self.assertEqual(main_document.files.count(), 2)
+        self.assertEqual(main_document.notes.count(), 2)
+        self.assertEqual(main_document.document_tags.count(), 2)
+        self.assertEqual(main_document.metadata.count(), 2)
+
+    def test_merge_fails_if_source_belongs_to_other_user(self):
+        # Arrange
+        user_document = Document.create_from_file(
+            owner=self.user, uploaded_file=self._upload_test_file()
+        )
+
+        other_user_document = Document.create_from_file(
+            owner=self.other_user, uploaded_file=self._upload_test_file()
+        )
+
+        url = reverse("document-merge", args=[user_document.id])
+        payload = {"source_document_ids": [other_user_document.id]}
+
+        # Act
+        response = self.client.post(url, payload, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_merge_fails_if_target_is_not_owned(self):
+        # Arrange
+        user_document = Document.create_from_file(
+            owner=self.user, uploaded_file=self._upload_test_file()
+        )
+
+        other_user_document = Document.create_from_file(
+            owner=self.other_user, uploaded_file=self._upload_test_file()
+        )
+
+        url = reverse("document-merge", args=[other_user_document.id])
+        payload = {"source_document_ids": [user_document.id]}
+
+        # Act
+        response = self.client.post(url, payload, format="json")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
