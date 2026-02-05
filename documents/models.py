@@ -229,6 +229,16 @@ class DocumentNote(TimeStampedModel):
     def __str__(self) -> str:
         return f"Note by {self.author} for {self.document.title[:7]}..."
 
+    def clean(self):
+        if not self.content.strip():
+            raise ValidationError({"content": "Note content cannot be empty."})
+
+        return super().clean()
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
 
 class Tag(TimeStampedModel):
     """Represents a reusable tag that can be applied to documents."""
