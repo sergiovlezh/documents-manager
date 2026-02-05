@@ -114,6 +114,16 @@ class DocumentFile(TimeStampedModel):
     def __str__(self) -> str:
         return self.original_filename
 
+    def delete(self, *args, **kwargs):
+        """Delete the DocumentFile instance and remove the associated file
+        from storage."""
+        storage = self.file.storage
+        file_path = self.file.name
+
+        super().delete(*args, **kwargs)
+
+        if storage.exists(file_path):
+            storage.delete(file_path)
 
     @staticmethod
     def extract_filename(file: File) -> str:
