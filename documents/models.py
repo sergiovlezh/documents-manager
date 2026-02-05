@@ -9,12 +9,13 @@ from random import randint
 from typing import TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.uploadedfile import UploadedFile
 from django.db import models, transaction
 
 from config.models import TimeStampedModel
-from documents.querysets import DocumentFileQuerySet, DocumentQuerySet
+from documents.querysets import DocumentQuerySet
 
 User = get_user_model()
 
