@@ -96,6 +96,14 @@ class DocumentFile(TimeStampedModel):
     )
     file = models.FileField(upload_to="documents/")
 
+    @property
+    def original_filename(self) -> str:
+        """Return the original filename without the storage path.
+
+        Returns:
+            str: The base filename of the uploaded file.
+        """
+        return self.extract_filename(self.file)
 
     class Meta:
         ordering = ["created_at"]
@@ -106,14 +114,6 @@ class DocumentFile(TimeStampedModel):
     def __str__(self) -> str:
         return self.original_filename
 
-    @property
-    def original_filename(self) -> str:
-        """Return the original filename without the storage path.
-
-        Returns:
-            str: The base filename of the uploaded file.
-        """
-        return self.extract_filename(self.file)
 
     @staticmethod
     def extract_filename(file: File) -> str:
