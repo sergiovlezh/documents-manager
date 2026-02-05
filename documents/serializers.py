@@ -42,13 +42,17 @@ class DocumentTagDetailSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "color"]
 
 
-class TagCreateSerializer(serializers.Serializer):
+class DocumentTagCreateUpdateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=50)
     color = serializers.CharField(max_length=7, required=False)
 
+    def validate_name(self, value: str) -> str:
+        return value.strip()
+
     def save(self, **kwargs):
         document: Document = self.context["document"]
-        user = self.context["request"].user
+        request: HttpRequest = self.context["request"]
+        user = request.user
 
         return document.add_tag_for_user(
             name=self.validated_data["name"],
