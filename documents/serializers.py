@@ -217,3 +217,22 @@ class DocumentFileCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError("The uploaded file is empty.")
 
         return value
+
+
+class DocumentNoteSerializer(serializers.ModelSerializer):
+    """Serializer to read document notes."""
+
+    author = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = DocumentNote
+        fields = ["id", "author", "content", "created_at"]
+        read_only_fields = ["id", "author", "created_at"]
+
+
+class DocumentNoteCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer to create or update document notes."""
+
+    class Meta:
+        model = DocumentNote
+        fields = ["content"]
