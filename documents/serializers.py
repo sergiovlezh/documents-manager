@@ -1,7 +1,12 @@
 from django.http import HttpRequest
 from rest_framework import serializers
 
-from documents.models import Document, DocumentFile, Tag
+from documents.models import (
+    Document,
+    DocumentFile,
+    DocumentTag,
+    Tag,
+)
 
 
 def get_tags_from_document(document: Document) -> list[dict]:
@@ -26,6 +31,31 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ["id", "name"]
+
+
+class DocumentTagDetailSerializer(serializers.ModelSerializer):
+    """Serializer to show the tag name and its user-specific color."""
+
+    name = serializers.CharField(source="tag.name", read_only=True)
+
+    class Meta:
+        model = DocumentTag
+        fields = ["id", "name", "color"]
+
+
+class TagCreateSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=50)
+    color = serializers.CharField(max_length=7, required=False)
+
+    def save(self, **kwargs):
+        document: Document = self.context["document"]
+        user = self.context["request"].user
+
+        return document.add_tag_for_user(
+            name=self.validated_data["name"],
+            owner=user,
+            color=self.validated_data.get("color"),
+        )
 
 
 class SingleFileDocumentCreateSerializer(serializers.Serializer):
