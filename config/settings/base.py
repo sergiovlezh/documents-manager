@@ -20,6 +20,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS: list[str] = [
     "rest_framework",
+    "drf_spectacular",
 ]
 
 LOCAL_APPS: list[str] = [
@@ -105,4 +106,12 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Documents API",
+    "DESCRIPTION": "API para gestión de documentos, archivos, etiquetas y metadatos",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
